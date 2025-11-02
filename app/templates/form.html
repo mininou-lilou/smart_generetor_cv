@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Générateur de CV Intelligent</title>
+    <link rel="stylesheet" href="/static/style.css?v=3">
+</head>
+<body>
+    <h1>🧠 Smart CV Generator</h1>
+
+    <form id="cvForm">
+        <fieldset>
+            <legend>Informations personnelles</legend>
+            <input type="text" name="name" placeholder="Nom complet" required>
+            <input type="email" name="email" placeholder="Adresse e-mail" required>
+            <input type="text" name="phone" placeholder="Téléphone (optionnel)">
+            <input type="text" name="location" placeholder="Localisation (optionnel)">
+            <input type="text" name="github" placeholder="Profil GitHub (optionnel)">
+            <textarea name="summary" placeholder="Profil / Objectif (optionnel)"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Compétences</legend>
+            <textarea name="skills" placeholder="Langages, outils, frameworks... (séparés par virgule)" required></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Formations</legend>
+            <textarea name="education" placeholder="Ex: 2021–2024 : Bachelor Réseaux et Sécurité Informatique (optionnel)"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Expériences professionnelles</legend>
+            <textarea name="experience" placeholder="Ex: Stage en cybersécurité chez XYZ, 2023 (optionnel)"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Projets</legend>
+            <textarea name="projects" placeholder="Ex: Développement d’une appli Flask, Simulation d’attaque réseau... (optionnel)"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Certifications</legend>
+            <textarea name="certifications" placeholder="Ex: Cisco CCNA, Google Cybersecurity, etc. (optionnel)"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Langues</legend>
+            <textarea name="languages" placeholder="Ex: Français (courant), Anglais (intermédiaire), etc. (optionnel)"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Qualités</legend>
+            <textarea name="qualities" placeholder="Ex: Leadership, rigueur, travail en équipe... (optionnel)"></textarea>
+        </fieldset>
+
+        <button type="submit">Générer mon CV PDF</button>
+    </form>
+
+    <script>
+        const form = document.getElementById('cvForm');
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    alert("Erreur lors de la génération du CV.");
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = formData.get('name').replace(/\s+/g, '_') + '_CV.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                // vider les champs après envoi
+                form.querySelectorAll('input, textarea').forEach(f => f.value = '');
+            } catch (error) {
+                console.error(error);
+                alert("Erreur de connexion avec le serveur.");
+            }
+        });
+    </script>
+</body>
+</html>
