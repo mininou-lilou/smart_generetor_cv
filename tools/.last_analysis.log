@@ -1,34 +1,28 @@
 ============================================================
-Rapport d'analyse du 2025-11-03 02:45:44
+Rapport d'analyse du 2025-11-03 03:35:33
 ============================================================
 
-Black (formatage) — Échec
+Syntaxe Python — Réussi
+
+Black (formatage) — Réussi
 --- Détails ---
---- C:\Users\Hba\smart_generetor_cv\app\main.py	2025-11-03 01:42:36.035426+00:00
-+++ C:\Users\Hba\smart_generetor_cv\app\main.py	2025-11-03 01:45:45.218958+00:00
-@@ -43,6 +43,6 @@
-         cv=data.dict(), year=datetime.now().year
-     )
-     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
-         HTML(string=html_content).write_pdf(tmp_pdf.name)
-         pdf_path: str = tmp_pdf.name
--    return FileResponse(pdf_path, filename=f"{data.name.replace(' ', '_')}_CV.pdf")
-\ No newline at end of file
-+    return FileResponse(pdf_path, filename=f"{data.name.replace(' ', '_')}_CV.pdf")
-would reformat C:\Users\Hba\smart_generetor_cv\app\main.py
+All done! \u2728 \U0001f370 \u2728
+3 files would be left unchanged.
 
-Oh no! \U0001f4a5 \U0001f494 \U0001f4a5
-1 file would be reformatted, 2 files would be left unchanged.
+Flake8 (lint) — Réussi
 
-Flake8 (lint) — Échec
+Pylint (logique) — Réussi
 --- Détails ---
-app\main.py:48:84: W292 no newline at end of file
+-------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 9.60/10, +0.40)
 
-Mypy (typage strict) — Réussi
+Mypy (typage) — Réussi
 --- Détails ---
 Success: no issues found in 3 source files
 
+Requests (sécurité) — Réussi
+
 ============================================================
-Des problèmes ont été détectés. Corrigez-les avant de committer/pusher.
+Tout est propre !
 
 ============================================================
