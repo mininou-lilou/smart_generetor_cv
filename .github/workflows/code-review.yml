@@ -32,6 +32,7 @@ jobs:
             mypy
             python-dotenv
             requests
+            colorama
             EOF
           fi
 
@@ -45,7 +46,7 @@ jobs:
           GEMINI_APP_PASSWORD: ${{ secrets.GEMINI_APP_PASSWORD }}
         run: |
           if [ -z "$GEMINI_API_KEY" ] || [ -z "$SENDER_EMAIL" ] || [ -z "$GEMINI_APP_PASSWORD" ]; then
-            echo "Erreur : Secrets manquants (GEMINI_API_KEY, SENDER_EMAIL, GEMINI_APP_PASSWORD)"
+            echo "Erreur : Secrets manquants"
             exit 1
           fi
 
