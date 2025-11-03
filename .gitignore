@@ -1,1 +1,9 @@
-"" 
+# Secrets locaux
+.env
+
+# Logs
+tools/.last_analysis.log
+
+# Python
+__pycache__/
+*.pyc
