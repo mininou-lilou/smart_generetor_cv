@@ -6,16 +6,7 @@ def calculate_sum(a, b):
     """Retourne la somme de a et b"""
     return a + b
 
-def process_data(data: List[Dict]):
-    results = []
-    for item in data:
-        name = item.get('name')
-        age = item['age]
-        if age > 18:
-            results.append(f"{name} est majeur)
-        else
-            results.append(f"{name} est mineur")
-    return results
+
 
 def main()
     print("Démarrage du programme...")
