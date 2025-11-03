@@ -1,12 +1,14 @@
 ============================================================
-Rapport d'analyse du 2025-11-03 02:45:44
+Rapport d'analyse du 2025-11-03 03:32:56
 ============================================================
+
+Syntaxe Python — Réussi
 
 Black (formatage) — Échec
 --- Détails ---
---- C:\Users\Hba\smart_generetor_cv\app\main.py	2025-11-03 01:42:36.035426+00:00
-+++ C:\Users\Hba\smart_generetor_cv\app\main.py	2025-11-03 01:45:45.218958+00:00
-@@ -43,6 +43,6 @@
+--- C:\Users\Hba\smart_generetor_cv\app\main.py	2025-11-03 02:31:15.751568+00:00
++++ C:\Users\Hba\smart_generetor_cv\app\main.py	2025-11-03 02:32:57.561483+00:00
+@@ -46,6 +46,6 @@
          cv=data.dict(), year=datetime.now().year
      )
      with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
@@ -22,13 +24,23 @@ Oh no! \U0001f4a5 \U0001f494 \U0001f4a5
 
 Flake8 (lint) — Échec
 --- Détails ---
-app\main.py:48:84: W292 no newline at end of file
+app\main.py:51:84: W292 no newline at end of file
 
-Mypy (typage strict) — Réussi
+Pylint (logique) — Échec
+--- Détails ---
+************* Module app.main
+app\main.py:51:0: C0304: Final newline missing (missing-final-newline)
+
+------------------------------------------------------------------
+Your code has been rated at 9.60/10 (previous run: 8.80/10, +0.80)
+
+Mypy (typage) — Réussi
 --- Détails ---
 Success: no issues found in 3 source files
 
+Requests (sécurité) — Réussi
+
 ============================================================
-Des problèmes ont été détectés. Corrigez-les avant de committer/pusher.
+Des problèmes détectés.
 
 ============================================================

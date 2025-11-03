@@ -1,12 +1,15 @@
 # app/main.py
+# --- STANDARD LIBRARY ---
+from datetime import datetime
+import tempfile
+
+# --- THIRD PARTY ---
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from weasyprint import HTML
-from datetime import datetime
-import tempfile
 
 app = FastAPI(title="Smart CV Generator")
 
@@ -31,7 +34,7 @@ async def form_page(request: Request) -> HTMLResponse:
 
 @app.post("/generate", response_class=FileResponse)
 async def generate_pdf(
-    request: Request,
+    _: Request,  # ← IGNORÉ INTENTIONNELLEMENT
     name: str = Form(...),
     email: str = Form(...),
     skills: str = Form(...),
