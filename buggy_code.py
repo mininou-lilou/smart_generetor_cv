@@ -10,7 +10,7 @@ def process_data(data: List[Dict]):
     results = []
     for item in data:
         name = item.get('name')
-        age = item['age']
+        age = item['age]
         if age > 18:
             results.append(f"{name} est majeur")
         else
@@ -47,7 +47,7 @@ def main()
     bad_sum = calculate_sum("10", 20)
     
     # Erreur flake8 : espace avant le deux-points
-    print(f"Résultat : {bad_sum}")
+    print(f"Résultat : {bad_sum")
     
     # Erreur pylint : trop de variables locales (simulé)
     a,b,c,d,e,f,g,h,i,j,k,l,m = range(13)
