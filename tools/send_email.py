@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """
 Envoi automatique d'e-mails suite à l'analyse du code.
 Utilise les Repository Secrets GitHub ou les variables d'environnement locales.
@@ -9,6 +8,7 @@ Utilise les Repository Secrets GitHub ou les variables d'environnement locales.
 import os
 import smtplib
 import subprocess
+import sys
 from email.mime.text import MIMEText
 from typing import Literal, Optional
 from dotenv import load_dotenv
@@ -16,14 +16,14 @@ from dotenv import load_dotenv
 # Charger .env pour usage local
 load_dotenv()
 
-# Récupération des secrets
+# --- Configuration des secrets ---
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 GEMINI_APP_PASSWORD = os.getenv("GEMINI_APP_PASSWORD")
 
 if not SENDER_EMAIL or not GEMINI_APP_PASSWORD:
     print("⚠️  Les variables SENDER_EMAIL et GEMINI_APP_PASSWORD ne sont pas définies.")
     print("➡️  Configure-les dans tes Secrets GitHub ou ton fichier .env.")
-    exit(1)
+    sys.exit(1)
 
 # --- Fonctions utilitaires ---
 
@@ -39,13 +39,13 @@ def get_git_user_email() -> Optional[str]:
         )
         email = result.stdout.strip()
         if not email:
-            print("⚠️  Aucune adresse e-mail configurée dans Git. Exécute : git config user.email 'ton@email.com'")
+            print("⚠️  Aucune adresse e-mail configurée dans Git. "
+                  "Exécute : git config user.email 'ton@email.com'")
             return None
         return email
     except Exception as e:
         print(f"⚠️  Impossible de récupérer l'e-mail Git : {e}")
         return None
-
 
 def send_email(subject: str, message: str, status: Literal["success", "failure"]) -> None:
     """Envoie un e-mail via SMTP Gmail au développeur local."""
@@ -75,6 +75,8 @@ def send_email(subject: str, message: str, status: Literal["success", "failure"]
     except Exception as e:
         print(f"⚠️  Erreur lors de l’envoi du mail : {e}\n")
 
+
+# --- Exécution principale ---
 
 if __name__ == "__main__":
     send_email(

@@ -1,128 +1,117 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """
 Analyse automatique du code Python du projet Smart CV Generator.
 Vérifie le formatage (Black), le style (Flake8) et le typage (Mypy).
-Les résultats sont affichés clairement et sauvegardés dans tools/.last_analysis.log
+Les résultats sont sauvegardés dans tools/.last_analysis.log
 pour envoi par e-mail via send_report.py.
 """
 
 import subprocess
 import sys
-import io
 import os
 from datetime import datetime
-from typing import Tuple
-from dotenv import load_dotenv
+from pathlib import Path
 
-# Forcer l'encodage UTF-8 sur Windows
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+# ===========================
+# Configuration
+# ===========================
 
-# Charger les variables locales (.env) si présentes
-load_dotenv()
+LOG_DIR = Path("tools")
+LOG_PATH = LOG_DIR / ".last_analysis.log"
+APP_DIR = Path("app")
 
-# Récupération des secrets (compatibles GitHub Actions et .env)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-GEMINI_APP_PASSWORD = os.getenv("GEMINI_APP_PASSWORD")
+# Créer le dossier tools si absent
+LOG_DIR.mkdir(exist_ok=True)
 
-if not GEMINI_API_KEY:
-    print("⚠️  Avertissement : aucune clé IA détectée (GEMINI_API_KEY).")
-else:
-    print("🔑 Clé API IA détectée (masquée pour sécurité).")
+# ===========================
+# Fonctions utilitaires
+# ===========================
 
-if not SENDER_EMAIL or not GEMINI_APP_PASSWORD:
-    print("⚠️  Les variables e-mail ne sont pas toutes définies (SENDER_EMAIL / GEMINI_APP_PASSWORD).")
-    print("➡️  Configure-les dans tes secrets GitHub ou ton fichier .env.\n")
+def run_tool(name: str, cmd: list) -> tuple[bool, str]:
+    """Exécute un outil via python -m et retourne (succès, sortie)."""
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=Path.cwd()
+        )
+        output = (result.stdout + result.stderr).strip()
+        success = result.returncode == 0
+        return success, output
+    except FileNotFoundError:
+        return False, f"{name} non trouvé. Installe-le avec 'pip install {name.lower()}'"
+    except Exception as e:
+        return False, f"Erreur inattendue : {e}"
+
+
+def log_result(lines: list, tool: str, success: bool, details: str = "") -> None:
+    """Ajoute un résultat au rapport."""
+    status = "Réussi" if success else "Échec"
+    lines.append(f"{tool} — {status}")
+    if details:
+        lines.append("--- Détails ---")
+        lines.append(details)
+    lines.append("")
 
 
 # ===========================
-# ⚙️ Fonctions utilitaires
+# Analyse principale
 # ===========================
 
-def run_command(command: str) -> Tuple[int, str]:
-    """Exécute une commande shell et retourne (code_retour, sortie)."""
-    process = subprocess.run(
-        command, shell=True, capture_output=True, text=True, encoding="utf-8", errors="replace"
-    )
-    return process.returncode, (process.stdout + process.stderr).strip()
+def main() -> int:
+    print("Lancement de l'analyse du projet Smart CV Generator...\n")
 
-
-def print_status(tool: str, success: bool, details: str = "") -> None:
-    """Affiche un message coloré selon le succès ou l’échec."""
-    symbol = "✅" if success else "❌"
-    print(f"{symbol} {tool} {'réussi' if success else 'a échoué.'}")
-    if not success and details:
-        print(details)
-    print()
-
-
-# ===========================
-# 🚀 Analyse principale
-# ===========================
-
-def main() -> None:
-    print("🚀 Lancement de l'analyse du projet Smart CV Generator...\n")
-
+    # Outils avec python -m (garanti de marcher après pip install)
     tools = {
-        "Black (formatage)": "black --check app/",
-        "Flake8 (lint)": "flake8 app/",
-        "Mypy (typage strict)": "mypy app/",
+        "Black (formatage)": [sys.executable, "-m", "black", "--check", "--diff", str(APP_DIR)],
+        "Flake8 (lint)": [sys.executable, "-m", "flake8", str(APP_DIR)],
+        "Mypy (typage strict)": [sys.executable, "-m", "mypy", str(APP_DIR)],
     }
 
-    global_success = True
     report_lines = []
+    all_success = True
 
-    # Ajout d’un en-tête dans le rapport
+    # En-tête
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     report_lines.append("=" * 60)
-    report_lines.append(f"🧪 Rapport d'analyse du {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    report_lines.append(f"Rapport d'analyse du {timestamp}")
     report_lines.append("=" * 60 + "\n")
 
-    for tool, command in tools.items():
-        print(f"🔍 {tool}...")
-        code, output = run_command(command)
-        success = code == 0
-        print_status(tool, success, output)
+    # Exécution
+    for name, cmd in tools.items():
+        print(f"{name}...")
+        success, output = run_tool(name, cmd)
+        log_result(report_lines, name, success, output)
 
-        # Sauvegarde dans le rapport
-        status_text = "✅ Réussi" if success else "❌ Échec"
-        report_lines.append(f"{tool} — {status_text}")
-        if output:
-            report_lines.append(f"--- Détails ---\n{output}\n")
-        report_lines.append("")
-
+        print(f"{'Réussi' if success else 'Échec'}")
         if not success:
-            global_success = False
+            all_success = False
+        print()
 
-    if not global_success:
-        summary = "🚫 Des problèmes ont été détectés. Corrigez-les avant de committer/pusher.\n"
-        print(summary)
+    # Résumé
+    if all_success:
+        summary = "Tout est propre ! Le code respecte les standards de qualité.\n"
     else:
-        summary = "🎉 Tout est propre ! Le code respecte les standards de qualité.\n"
+        summary = "Des problèmes ont été détectés. Corrigez-les avant de committer/pusher.\n"
         print(summary)
 
-    # Ajouter un résumé clair à la fin du rapport
     report_lines.append("=" * 60)
     report_lines.append(summary)
     report_lines.append("=" * 60 + "\n")
 
-    # ===========================
-    # 💾 Sauvegarde du rapport
-    # ===========================
-    os.makedirs("tools", exist_ok=True)
-    report_path = os.path.join("tools", ".last_analysis.log")
-
+    # Sauvegarde
     try:
-        with open(report_path, "w", encoding="utf-8") as f:
-            f.write("\n".join(report_lines))
-        print(f"📝 Rapport sauvegardé dans {report_path}")
+        LOG_PATH.write_text("\n".join(report_lines), encoding="utf-8")
+        print(f"Rapport sauvegardé : {LOG_PATH}")
     except Exception as e:
-        print(f"⚠️ Impossible d’écrire le rapport d’analyse : {e}")
+        print(f"Impossible d’écrire le rapport : {e}")
 
-    # Code de sortie selon le résultat
-    sys.exit(0 if global_success else 1)
+    return 0 if all_success else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
