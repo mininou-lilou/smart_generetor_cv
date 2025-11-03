@@ -1,28 +1,45 @@
 ============================================================
-Rapport d'analyse du 2025-11-03 05:07:36
+Rapport d'analyse du 2025-11-03 12:02:11
 ============================================================
 
 Syntaxe Python — Réussi
 
-Black (formatage) — Réussi
+Black (formatage) — Échec
 --- Détails ---
-All done! \u2728 \U0001f370 \u2728
-3 files would be left unchanged.
+--- C:\Users\DELL\smart_generetor_cv\app\models.py	2025-11-03 20:01:53.858698+00:00
++++ C:\Users\DELL\smart_generetor_cv\app\models.py	2025-11-03 20:02:13.901742+00:00
+@@ -1 +1 @@
+-bonjour
+\ No newline at end of file
++bonjour
+would reformat C:\Users\DELL\smart_generetor_cv\app\models.py
 
-Flake8 (lint) — Réussi
+Oh no! \U0001f4a5 \U0001f494 \U0001f4a5
+1 file would be reformatted, 2 files would be left unchanged.
 
-Pylint (logique) — Réussi
+Flake8 (lint) — Échec
 --- Détails ---
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+app\models.py:1:1: F821 undefined name 'bonjour'
+app\models.py:1:8: W292 no newline at end of file
 
-Mypy (typage) — Réussi
+Pylint (logique) — Échec
 --- Détails ---
-Success: no issues found in 3 source files
+************* Module app.models
+app\models.py:1:0: C0304: Final newline missing (missing-final-newline)
+app\models.py:1:0: W0104: Statement seems to have no effect (pointless-statement)
+app\models.py:1:0: E0602: Undefined variable 'bonjour' (undefined-variable)
+
+-----------------------------------
+Your code has been rated at 7.31/10
+
+Mypy (typage) — Échec
+--- Détails ---
+app\models.py:1: error: Name "bonjour" is not defined  [name-defined]
+Found 1 error in 1 file (checked 3 source files)
 
 Requests (sécurité) — Réussi
 
 ============================================================
-Tout est propre !
+Des problèmes détectés.
 
 ============================================================
