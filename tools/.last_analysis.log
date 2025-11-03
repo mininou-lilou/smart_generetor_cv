@@ -1,21 +1,26 @@
 ============================================================
-🧪 Rapport d'analyse du 2025-11-02 19:41:49
+🧪 Rapport d'analyse du 2025-11-03 00:36:28
 ============================================================
 
-Black (formatage) — ✅ Réussi
+Black (formatage) — ❌ Échec
 --- Détails ---
-All done! \u2728 \U0001f370 \u2728
-3 files would be left unchanged.
+'black' n’est pas reconnu en tant que commande interne
+ou externe, un programme exécutable ou un fichier de commandes.
 
 
-Flake8 (lint) — ✅ Réussi
-
-Mypy (typage strict) — ✅ Réussi
+Flake8 (lint) — ❌ Échec
 --- Détails ---
-Success: no issues found in 3 source files
+'flake8' n’est pas reconnu en tant que commande interne
+ou externe, un programme exécutable ou un fichier de commandes.
+
+
+Mypy (typage strict) — ❌ Échec
+--- Détails ---
+'mypy' n’est pas reconnu en tant que commande interne
+ou externe, un programme exécutable ou un fichier de commandes.
 
 
 ============================================================
-🎉 Tout est propre ! Le code respecte les standards de qualité.
+🚫 Des problèmes ont été détectés. Corrigez-les avant de committer/pusher.
 
 ============================================================

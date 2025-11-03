@@ -2,126 +2,226 @@
 # -*- coding: utf-8 -*-
 
 """
-Analyse automatique du code Python du projet Smart CV Generator.
-Vérifie le formatage (Black), le style (Flake8) et le typage (Mypy).
-Les résultats sont affichés clairement et sauvegardés dans tools/.last_analysis.log
-pour envoi par e-mail via send_report.py.
+Envoi d'un rapport complet (lint + typage + diff Git + analyse IA)
+via e-mail après un push, commit ou GitHub Actions.
+Compatible avec :
+  • Repository Secrets (GitHub)
+  • Fichier .env local
+  • Hooks Git (pre-commit / pre-push)
 """
 
+import os
+import io
+import smtplib
 import subprocess
 import sys
-import io
-import os
-from datetime import datetime
-from typing import Tuple
-from dotenv import load_dotenv
+from email.mime.text import MIMEText
+from typing import Literal, Optional, List
 
-# Forcer l'encodage UTF-8 sur Windows
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+# --- Forcer UTF-8 sur Windows ---
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+os.environ["PYTHONIOENCODING"] = "utf-8"
 
-# Charger les variables locales (.env) si présentes
-load_dotenv()
+# --- Chargement optionnel de .env ---
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Charge .env si présent
+except ImportError:
+    print("Warning: 'python-dotenv' non installé → .env ignoré.")
 
-# Récupération des secrets (compatibles GitHub Actions et .env)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# --- Variables d'environnement ---
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 GEMINI_APP_PASSWORD = os.getenv("GEMINI_APP_PASSWORD")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-if not GEMINI_API_KEY:
-    print("⚠️  Avertissement : aucune clé IA détectée (GEMINI_API_KEY).")
-else:
-    print("🔑 Clé API IA détectée (masquée pour sécurité).")
-
-if not SENDER_EMAIL or not GEMINI_APP_PASSWORD:
-    print("⚠️  Les variables e-mail ne sont pas toutes définies (SENDER_EMAIL / GEMINI_APP_PASSWORD).")
-    print("➡️  Configure-les dans tes secrets GitHub ou ton fichier .env.\n")
+# --- Vérification e-mail ---
+SEND_EMAIL_ENABLED = bool(SENDER_EMAIL and GEMINI_APP_PASSWORD)
+if not SEND_EMAIL_ENABLED:
+    print("Warning: E-mail désactivé (SENDER_EMAIL ou GEMINI_APP_PASSWORD manquants).")
 
 
-# ===========================
-# ⚙️ Fonctions utilitaires
-# ===========================
+# ====================================================
+# Fonctions utilitaires
+# ====================================================
 
-def run_command(command: str) -> Tuple[int, str]:
-    """Exécute une commande shell et retourne (code_retour, sortie)."""
-    process = subprocess.run(
-        command, shell=True, capture_output=True, text=True, encoding="utf-8", errors="replace"
-    )
-    return process.returncode, (process.stdout + process.stderr).strip()
-
-
-def print_status(tool: str, success: bool, details: str = "") -> None:
-    """Affiche un message coloré selon le succès ou l’échec."""
-    symbol = "✅" if success else "❌"
-    print(f"{symbol} {tool} {'réussi' if success else 'a échoué.'}")
-    if not success and details:
-        print(details)
-    print()
+def get_git_user_email() -> Optional[str]:
+    """Récupère l'email Git de l'utilisateur (git config user.email)."""
+    try:
+        result = subprocess.run(
+            ["git", "config", "user.email"],
+            capture_output=True, text=True, check=False, encoding="utf-8"
+        )
+        email = result.stdout.strip()
+        return email if email else None
+    except Exception as e:
+        print(f"Warning: Impossible de lire git config user.email : {e}")
+        return None
 
 
-# ===========================
-# 🚀 Analyse principale
-# ===========================
+def read_analysis_report() -> str:
+    """Lit le rapport d'analyse généré par analyze_code.py."""
+    path = "tools/.last_analysis.log"
+    if not os.path.exists(path):
+        return "Warning: Aucun rapport d’analyse trouvé (tools/.last_analysis.log)."
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        return f"Warning: Erreur lecture rapport : {e}"
 
-def main() -> None:
-    print("🚀 Lancement de l'analyse du projet Smart CV Generator...\n")
 
-    tools = {
-        "Black (formatage)": "black --check app/",
-        "Flake8 (lint)": "flake8 app/",
-        "Mypy (typage strict)": "mypy app/",
-    }
+def get_git_diff() -> str:
+    """Récupère le diff des changements (staged ou dernier commit)."""
+    try:
+        # Priorité : changements staged
+        result = subprocess.run(
+            ["git", "diff", "--cached"], capture_output=True, text=True,
+            check=False, encoding="utf-8"
+        )
+        if result.stdout.strip():
+            return result.stdout
 
-    global_success = True
-    report_lines = []
+        # Sinon : diff du dernier commit
+        result = subprocess.run(
+            ["git", "diff", "HEAD~1"], capture_output=True, text=True,
+            check=False, encoding="utf-8"
+        )
+        return result.stdout.strip() or "Aucun changement détecté."
+    except Exception as e:
+        return f"Warning: Erreur git diff : {e}"
 
-    # Ajout d’un en-tête dans le rapport
-    report_lines.append("=" * 60)
-    report_lines.append(f"🧪 Rapport d'analyse du {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    report_lines.append("=" * 60 + "\n")
 
-    for tool, command in tools.items():
-        print(f"🔍 {tool}...")
-        code, output = run_command(command)
-        success = code == 0
-        print_status(tool, success, output)
+def get_changed_files() -> List[str]:
+    """Liste des fichiers modifiés dans le dernier commit."""
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD~1"],
+            capture_output=True, text=True, check=False, encoding="utf-8"
+        )
+        return [f for f in result.stdout.splitlines() if f.strip()]
+    except Exception:
+        return []
 
-        # Sauvegarde dans le rapport
-        status_text = "✅ Réussi" if success else "❌ Échec"
-        report_lines.append(f"{tool} — {status_text}")
-        if output:
-            report_lines.append(f"--- Détails ---\n{output}\n")
-        report_lines.append("")
 
-        if not success:
-            global_success = False
+def ask_gemini_for_analysis(report: str, diff: str, changed_files: List[str]) -> str:
+    """Analyse via Gemini API → retourne du HTML stylé (modèle 2.5 Flash prioritaire)."""
+    if not GEMINI_API_KEY:
+        return "<p style='color: orange;'>Warning: GEMINI_API_KEY manquante → IA désactivée.</p>"
 
-    if not global_success:
-        summary = "🚫 Des problèmes ont été détectés. Corrigez-les avant de committer/pusher.\n"
-        print(summary)
-    else:
-        summary = "🎉 Tout est propre ! Le code respecte les standards de qualité.\n"
-        print(summary)
+    # Modèles 2025 : 2.5 Flash en priorité + fallbacks stables
+    MODELS = [
+        "gemini-2.5-flash",      # Ton modèle principal (stable, rapide, 1M tokens)
+        "gemini-2.5-flash-lite", # Plus léger/cost-efficient
+        "gemini-2.0-flash"       # Fallback stable
+    ]
 
-    # Ajouter un résumé clair à la fin du rapport
-    report_lines.append("=" * 60)
-    report_lines.append(summary)
-    report_lines.append("=" * 60 + "\n")
+    for model in MODELS:
+        try:
+            import requests  # Import local
 
-    # ===========================
-    # 💾 Sauvegarde du rapport
-    # ===========================
-    os.makedirs("tools", exist_ok=True)
-    report_path = os.path.join("tools", ".last_analysis.log")
+            prompt = f"""
+Tu es un expert en revue de code Python. Génère un **rapport HTML complet** :
+
+**Fichiers modifiés** : {', '.join(changed_files) or 'Aucun'}
+**Diff Git** :
+{diff[:3000]}
+**Rapport d’analyse** :
+{report}
+
+**Style** :
+- Titre principal en <h1> (vert si succès, rouge si échec)
+- Fond #f9f9fb
+- Boîte blanche centrée avec ombre
+- Code en <pre><code>
+- Suggestions en bleu
+- Ton professionnel, clair, actionnable
+"""
+
+            # URL 2025 : v1beta obligatoire pour 2.5+
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+            headers = {"Content-Type": "application/json"}
+            params = {"key": GEMINI_API_KEY}  # Key en paramètre (standard)
+            payload = {"contents": [{"parts": [{"text": prompt}]}]}
+
+            response = requests.post(url, headers=headers, params=params, json=payload, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+
+            text = (
+                data.get("candidates", [{}])[0]
+                .get("content", {})
+                .get("parts", [{}])[0]
+                .get("text", "")
+            )
+
+            html = text.replace("```html", "").replace("```", "").strip()
+            return html or "<p>Warning: Réponse vide de l’IA.</p>"
+
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                print(f"Warning: Modèle '{model}' non trouvé (2025 update) → essai suivant...")
+                continue
+            else:
+                raise
+        except Exception as e:
+            print(f"Warning: Erreur avec '{model}' : {e}")
+            continue  # Essaie le suivant
+
+    # Si tous échouent
+    return "<p style='color: red;'>Erreur: Modèles Gemini KO. Vérifie ta clé sur <a href='https://aistudio.google.com/app/apikey'>AI Studio</a> (modèles 2.5+ requis).</p>"
+
+
+def send_email(subject: str, html_body: str, status: Literal["success", "failure"]) -> None:
+    """Envoie un e-mail HTML via Gmail."""
+    if not SEND_EMAIL_ENABLED:
+        print("Warning: E-mail désactivé.")
+        return
+
+    recipient = get_git_user_email() or SENDER_EMAIL
+    if not recipient:
+        print("Warning: Aucun destinataire → e-mail ignoré.")
+        return
+
+    msg = MIMEText(html_body, "html", "utf-8")
+    msg["Subject"] = subject
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = recipient
 
     try:
-        with open(report_path, "w", encoding="utf-8") as f:
-            f.write("\n".join(report_lines))
-        print(f"📝 Rapport sauvegardé dans {report_path}")
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(SENDER_EMAIL, GEMINI_APP_PASSWORD)
+            server.send_message(msg)
+        print(f"Success: E-mail envoyé à {recipient}")
     except Exception as e:
-        print(f"⚠️ Impossible d’écrire le rapport d’analyse : {e}")
+        print(f"Warning: Échec envoi e-mail : {e}")
 
-    # Code de sortie selon le résultat
-    sys.exit(0 if global_success else 1)
+
+# ====================================================
+# Exécution principale
+# ====================================================
+
+def main() -> None:
+    # Récupère les arguments
+    status = sys.argv[1] if len(sys.argv) > 1 else "success"
+    origin = sys.argv[2] if len(sys.argv) > 2 else "manual"
+
+    print(f"Préparation du rapport ({origin})...")
+
+    report = read_analysis_report()
+    diff = get_git_diff()
+    files = get_changed_files()
+
+    html_analysis = ask_gemini_for_analysis(report, diff, files)
+
+    subject = (
+        "Success: Smart CV Generator — Code validé"
+        if status == "success"
+        else "Failure: Smart CV Generator — Erreurs détectées"
+    )
+
+    send_email(subject, html_analysis, status)
 
 
 if __name__ == "__main__":
