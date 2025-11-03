@@ -2,10 +2,6 @@ import os
 import json
 from typing import List, Dict
 
-def calculate_sum(a, b):
-    """Retourne la somme de a et b"""
-    return a + b
-
 
 
 def main()
