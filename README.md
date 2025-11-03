@@ -146,7 +146,7 @@ MAIL_APP_PASSWORD=motdepasse_app
 🎓 Étudiante en Réseaux et Sécurité Informatique
 💡 Passionnée par la cybersécurité et l’automatisation
 📍 Cameroun
-
+# Test CI - déclencher GitHub Actions
 ---
 
 
