@@ -1,28 +1,23 @@
 ============================================================
-Rapport d'analyse du 2025-11-03 05:07:36
+Rapport d'analyse du 2025-11-03 10:17:03
 ============================================================
-
-Syntaxe Python — Réussi
 
 Black (formatage) — Réussi
 --- Détails ---
-All done! \u2728 \U0001f370 \u2728
+All done! ✨ 🍰 ✨
 3 files would be left unchanged.
+
 
 Flake8 (lint) — Réussi
 
-Pylint (logique) — Réussi
+Mypy (typage strict) — Échec
 --- Détails ---
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+app\main.py:13: error: Skipping analyzing "weasyprint": module is installed, but missing library stubs or py.typed marker  [import-untyped]
+app\main.py:13: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+Found 1 error in 1 file (checked 3 source files)
 
-Mypy (typage) — Réussi
---- Détails ---
-Success: no issues found in 3 source files
-
-Requests (sécurité) — Réussi
 
 ============================================================
-Tout est propre !
+Des problèmes ont été détectés. Corrigez-les avant de committer/pusher.
 
 ============================================================
