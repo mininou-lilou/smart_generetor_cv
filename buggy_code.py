@@ -12,7 +12,7 @@ def process_data(data: List[Dict]):
         name = item.get('name')
         age = item['age]
         if age > 18:
-            results.append(f"{name} est majeur")
+            results.append(f"{name} est majeur)
         else
             results.append(f"{name} est mineur")
     return results

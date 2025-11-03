@@ -1,26 +1,34 @@
 ============================================================
-🧪 Rapport d'analyse du 2025-11-03 00:36:28
+Rapport d'analyse du 2025-11-03 02:45:44
 ============================================================
 
-Black (formatage) — ❌ Échec
+Black (formatage) — Échec
 --- Détails ---
-'black' n’est pas reconnu en tant que commande interne
-ou externe, un programme exécutable ou un fichier de commandes.
+--- C:\Users\Hba\smart_generetor_cv\app\main.py	2025-11-03 01:42:36.035426+00:00
++++ C:\Users\Hba\smart_generetor_cv\app\main.py	2025-11-03 01:45:45.218958+00:00
+@@ -43,6 +43,6 @@
+         cv=data.dict(), year=datetime.now().year
+     )
+     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+         HTML(string=html_content).write_pdf(tmp_pdf.name)
+         pdf_path: str = tmp_pdf.name
+-    return FileResponse(pdf_path, filename=f"{data.name.replace(' ', '_')}_CV.pdf")
+\ No newline at end of file
++    return FileResponse(pdf_path, filename=f"{data.name.replace(' ', '_')}_CV.pdf")
+would reformat C:\Users\Hba\smart_generetor_cv\app\main.py
 
+Oh no! \U0001f4a5 \U0001f494 \U0001f4a5
+1 file would be reformatted, 2 files would be left unchanged.
 
-Flake8 (lint) — ❌ Échec
+Flake8 (lint) — Échec
 --- Détails ---
-'flake8' n’est pas reconnu en tant que commande interne
-ou externe, un programme exécutable ou un fichier de commandes.
+app\main.py:48:84: W292 no newline at end of file
 
-
-Mypy (typage strict) — ❌ Échec
+Mypy (typage strict) — Réussi
 --- Détails ---
-'mypy' n’est pas reconnu en tant que commande interne
-ou externe, un programme exécutable ou un fichier de commandes.
-
+Success: no issues found in 3 source files
 
 ============================================================
-🚫 Des problèmes ont été détectés. Corrigez-les avant de committer/pusher.
+Des problèmes ont été détectés. Corrigez-les avant de committer/pusher.
 
 ============================================================

@@ -9,12 +9,13 @@ from datetime import datetime
 import tempfile
 
 app = FastAPI(title="Smart CV Generator")
-# configuration templates & static
+
+# Configuration templates & static
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
-# modèle de données typé
+# Modèle de données typé
 class CVData(BaseModel):
     name: str
     email: str
@@ -22,13 +23,13 @@ class CVData(BaseModel):
     experience: str
 
 
-@app.get("/", response_class=HTMLResponse)  # type: ignore[misc]
+@app.get("/", response_class=HTMLResponse)
 async def form_page(request: Request) -> HTMLResponse:
     """Affiche la page du formulaire."""
     return templates.TemplateResponse("form.html", {"request": request})
 
 
-@app.post("/generate", response_class=FileResponse)  # type: ignore[misc]
+@app.post("/generate", response_class=FileResponse)
 async def generate_pdf(
     request: Request,
     name: str = Form(...),
